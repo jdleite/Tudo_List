@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,9 +23,9 @@ public class MainActivity extends Activity {
     private EditText textoTarefa;
     private ListView listaTarefas;
     private SQLiteDatabase bancoDados;
-    private ArrayAdapter<String>  itensAdaptador;
+    private ArrayAdapter<String> itensAdaptador;
     private ArrayList<String> itens;
-
+    private ArrayList<Integer> ids;
 
 
     @Override
@@ -38,6 +39,7 @@ public class MainActivity extends Activity {
 
             textoTarefa = (EditText) findViewById(R.id.textoId);
             botaoAdicionar = (Button) findViewById(R.id.botaoAdiciId);
+            listaTarefas = (ListView) findViewById(R.id.listViewId);
 
             bancoDados = openOrCreateDatabase("apptarefas", MODE_PRIVATE, null);
 
@@ -53,6 +55,16 @@ public class MainActivity extends Activity {
                     salvarTarefa(textoDigitado);
 
 
+                }
+            });
+
+
+            listaTarefas.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                    removerTarefa(ids.get(position));
+
+                    return true;
                 }
             });
 
@@ -100,11 +112,12 @@ public class MainActivity extends Activity {
             int indiceColunaId = cursor.getColumnIndex("id");
             int indiceColunaTarefa = cursor.getColumnIndex("tarefa");
 
-            listaTarefas = (ListView) findViewById(R.id.listViewId);
 
             itens = new ArrayList<String>();
 
-            itensAdaptador = new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_2,android.R.id.text2,itens);
+            ids = new ArrayList<Integer>();
+
+            itensAdaptador = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_2, android.R.id.text2, itens);
             listaTarefas.setAdapter(itensAdaptador);
 
 
@@ -115,6 +128,7 @@ public class MainActivity extends Activity {
                 Log.i("Resultado - ", "Tarefa" + cursor.getString(indiceColunaTarefa));
 
                 itens.add(cursor.getString(indiceColunaTarefa));
+                ids.add(Integer.parseInt(cursor.getString(indiceColunaId)));
 
                 cursor.moveToNext();
 
@@ -125,5 +139,17 @@ public class MainActivity extends Activity {
         }
 
 
+    }
+
+
+    private void removerTarefa(Integer id) {
+        try {
+
+            bancoDados.execSQL("DELETE FROM tarefas WHERE ID = " + id);
+            recuperarTarefas();
+            Toast.makeText(getApplicationContext(), "Tarefa Removida", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
